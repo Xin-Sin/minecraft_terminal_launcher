@@ -7,8 +7,6 @@ package top.xinsin.util;
  * @version 1.0.0
  */
 public class StringConstant {
-    public static final String MINECRAFT_DIR = "/home/xinsin/.minecraft/";
-    public static final String MINECRAFT_LIBRARIES = "/home/xinsin/.minecraft/libraries/";
     public static final String OS_NAME = System.getProperty("os.name");
     public static final String LAUNCH_VERSION = "XMTL 1.0.1";
     public static final String BRAND = LAUNCH_VERSION.split(" ")[0];

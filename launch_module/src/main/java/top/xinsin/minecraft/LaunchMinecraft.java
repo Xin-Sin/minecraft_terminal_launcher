@@ -6,16 +6,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import top.xinsin.entity.XMTL;
 import top.xinsin.util.FileUtil;
+import top.xinsin.util.InputUtil;
 import top.xinsin.util.StringConstant;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created On 8/3/22 1:07 PM
@@ -30,13 +29,9 @@ public class LaunchMinecraft {
     public void readVersionJson(String path){
         file = new File(path);
         String content = null;
-        try {
-            content = FileUtils.readFileToString(file, "UTF-8");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        content = FileUtil.readFile(path);
         JSONObject jsonObject = JSONObject.parseObject(content);
-        ArrayList<String> libraries = getClassPath(jsonObject.getJSONArray("patches"));
+        HashSet<String> libraries = getClassPath(jsonObject.getJSONArray("patches"));
         Map<String, String> jvmArgs = getJvmArgs(jsonObject.getJSONObject("arguments").getJSONArray("jvm"));
         Map<String, String> minecraftArgs = getMinecraftArgs(jsonObject);
         StringBuilder shellText = new StringBuilder();
@@ -45,7 +40,7 @@ public class LaunchMinecraft {
                 .append("cd ")
                 .append(file.getPath(), 0, file.getPath().lastIndexOf(File.separator))
                 .append("\n")
-                .append(" prime-run /usr/local/java/jdk1.8.0_311/bin/java ");
+                .append("prime-run /usr/local/java/jdk1.8.0_311/bin/java ");
         for (Map.Entry<String,String> entry:jvmArgs.entrySet()) {
             if (entry.getValue().equals("@")) {
                 shellText.append(entry.getKey()).append(" ");
@@ -85,12 +80,14 @@ public class LaunchMinecraft {
                             shellText.append(path1).append(":");
                         }
                     }
-                    for (int i = 0; i < libraries.size(); i++) {
-                        shellText.append(StringConstant.MINECRAFT_LIBRARIES).append(libraries.get(i));
-                        if (i != libraries.size() - 1) {
+                    AtomicInteger num = new AtomicInteger();
+                    libraries.forEach(e ->{
+                        shellText.append(InputUtil.minecraft_libraries).append(e);
+                        if (num.get() != libraries.size() - 1) {
                             shellText.append(File.pathSeparator);
                         }
-                    }
+                        num.getAndIncrement();
+                    });
                     shellText.append(" ");
                 }
             }
@@ -112,7 +109,6 @@ public class LaunchMinecraft {
         }
         try {
             String property = System.getProperty("user.dir");
-            System.out.println("property = " + property);
             Process exec = Runtime.getRuntime().exec("sh -c ./launch.sh", null, new File(property));
             BufferedReader input = new BufferedReader(new InputStreamReader(exec.getInputStream()));
             String line = "";
@@ -122,6 +118,7 @@ public class LaunchMinecraft {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        System.out.println(shellText.toString());
         log.info("结束minecraft进程");
     }
 
@@ -140,8 +137,8 @@ public class LaunchMinecraft {
         minecraftArgs.put("--versionType",StringConstant.LAUNCH_VERSION);
         minecraftArgs.put("--width",StringConstant.WIDTH.toString());
         minecraftArgs.put("--height",StringConstant.HEIGHT.toString());
-        minecraftArgs.put("--gameDir",StringConstant.MINECRAFT_DIR + "versions/1.16.5");
-        minecraftArgs.put("--assetsDir",StringConstant.MINECRAFT_DIR + "assets");
+        minecraftArgs.put("--gameDir",file.getPath().substring(0,file.getPath().lastIndexOf(File.separator)));
+        minecraftArgs.put("--assetsDir",InputUtil.minecraftPath + "assets");
         return minecraftArgs;
     }
     /**
@@ -188,6 +185,7 @@ public class LaunchMinecraft {
         jvmArgs.put("-Dminecraft.client.jar","");
         jvmArgs.put("-Dfml.ignoreInvalidMinecraftCertificates","true");
         jvmArgs.put("-Dfml.ignorePatchDiscrepancies","true");
+        jvmArgs.put("-Dlog4j.configurationFile",file.getPath().substring(0,file.getPath().lastIndexOf(File.separator)) + "/log4j2.xml");
         jvmArgs.put("-Xmn128m","@");
         jvmArgs.put("-Xmx1024m","@");
         jvmArgs.put("-XX:+UseG1GC","@");
@@ -202,31 +200,39 @@ public class LaunchMinecraft {
      * @param jsonArray
      * @return
      */
-    private ArrayList<String> getClassPath(JSONArray jsonArray){
-        JSONArray jsonArray1 = jsonArray.getJSONObject(0).getJSONArray("libraries");
-        ArrayList<String> classPath = new ArrayList<>();
-        ArrayList<String > deduplication = new ArrayList<>();
-        deduplication.add("ca/weblite/java-objc-bridge/1.0.0/java-objc-bridge-1.0.0.jar");
-        deduplication.add("org/lwjgl/lwjgl/3.2.1/lwjgl-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-jemalloc/3.2.1/lwjgl-jemalloc-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-openal/3.2.1/lwjgl-openal-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-opengl/3.2.1/lwjgl-opengl-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-glfw/3.2.1/lwjgl-glfw-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-stb/3.2.1/lwjgl-stb-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-tinyfd/3.2.1/lwjgl-tinyfd-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-jemalloc/3.2.2/lwjgl-jemalloc-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-openal/3.2.2/lwjgl-openal-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-glfw/3.2.1/lwjgl-glfw-3.2.1.jar");
-        deduplication.add("org/lwjgl/lwjgl-stb/3.2.1/lwjgl-stb-3.2.1.jar");
+    private HashSet<String> getClassPath(JSONArray jsonArray){
+        JSONArray libraries = jsonArray.getJSONObject(0).getJSONArray("libraries");
+        HashSet<String> classPath = new HashSet<>();
 //       拼接原版依赖库jar路径
-        flag:for (int i = 0; i < jsonArray1.size(); i++) {
-            JSONObject jsonObject = jsonArray1.getJSONObject(i);
-            jsonObject = jsonObject.getJSONObject("downloads");
+        for (int i = 0; i < libraries.size(); i++) {
+            JSONObject jsonObject = libraries.getJSONObject(i).getJSONObject("downloads");
             if (jsonObject != null){
                 String string = jsonObject.getJSONObject("artifact").getString("path");
-                for (String s :deduplication) {
-                    if (s.equals(string)){
-                        continue flag;
+                JSONArray rules = libraries.getJSONObject(i).getJSONArray("rules");
+                if (rules!= null) {
+                    String action = rules.getJSONObject(0).getString("action");
+                    if (rules.size() == 2){
+                        JSONObject jsonObject1 = rules.getJSONObject(1);
+                        String disallowAction = jsonObject1.getString("action");
+                        String os_name = jsonObject1.getJSONObject("os").getString("name");
+                        if (action.equals("allow")){
+                            if(disallowAction.equals("disallow")) {
+                                if (!StringConstant.OS_NAME.equals(os_name)) {
+                                    classPath.add(string);
+                                }else {
+                                    continue;
+                                }
+                            }
+                        }
+                    }else{
+                        String os_name = rules.getJSONObject(0).getJSONObject("os").getString("name");
+                        if (action.equals("allow")){
+                            if (StringConstant.OS_NAME.equals(os_name)) {
+                                classPath.add(string);
+                            }else {
+                                continue;
+                            }
+                        }
                     }
                 }
                 classPath.add(string);
@@ -241,8 +247,8 @@ public class LaunchMinecraft {
             String version = names[2];
             StringBuilder path = new StringBuilder();
             String[] packages1 = packages.split("\\.");
-            for (int j = 0; j < packages1.length; j++) {
-                path.append(packages1[j]);
+            for (String s : packages1) {
+                path.append(s);
                 path.append(File.separator);
             }
             path.append(name)
@@ -268,29 +274,6 @@ public class LaunchMinecraft {
         return name.split(":");
     }
 
-
-    /**
-     * 查找java
-     */
-    private ArrayList<String> findJava() {
-        ArrayList<String> javaPath = new ArrayList<>();
-        try {
-            Process whereis_java = Runtime.getRuntime().exec("whereis java");
-            BufferedReader input = new BufferedReader(new InputStreamReader(whereis_java.getInputStream()));
-            String line = "";
-            while ((line = input.readLine()) != null) {
-                String[] s = line.split(" ");
-                for (String s1 : s) {
-                    if (s1.endsWith("/bin/java")) {
-                        javaPath.add(s1);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return javaPath;
-    }
     private XMTL updatePlayerInfo(){
         new MicrosoftLogin().accountRefresh();
         return JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTL.class);

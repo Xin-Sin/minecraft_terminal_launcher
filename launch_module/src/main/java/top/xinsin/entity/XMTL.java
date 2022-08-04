@@ -18,4 +18,7 @@ public class XMTL {
     private String uuid;
     private String name;
     private String refreshToken;
+    private String selectJavaVersion;
+    private String wrapCommand;
+    private String minecraftPath;
 }
