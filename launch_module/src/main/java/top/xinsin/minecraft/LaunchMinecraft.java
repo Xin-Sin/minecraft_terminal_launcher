@@ -2,7 +2,10 @@ package top.xinsin.minecraft;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import top.xinsin.entity.XMTL;
+import top.xinsin.util.FileUtil;
 import top.xinsin.util.StringConstant;
 
 import java.io.BufferedReader;
@@ -20,6 +23,7 @@ import java.util.Objects;
  * @author xinsin
  * @version 1.0.0
  */
+@Slf4j
 public class LaunchMinecraft {
     private File file = null;
 
@@ -118,21 +122,21 @@ public class LaunchMinecraft {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(shellText);
-        System.out.println(findJava());
+        log.info("结束minecraft进程");
     }
 
     private Map<String,String> getMinecraftArgs(JSONObject jsonObject){
+        XMTL XMTL = updatePlayerInfo();
         Map<String,String> minecraftArgs = new HashMap<>();
         String mainClass = jsonObject.getString("mainClass");
         String version = jsonObject.getString("id");
         String assetIndex = jsonObject.getJSONObject("assetIndex").getString("id");
         minecraftArgs.put("mainClass",mainClass);
-        minecraftArgs.put("--username","mc_xinsin");
+        minecraftArgs.put("--username", XMTL.getName());
         minecraftArgs.put("--version",version);
         minecraftArgs.put("--assetIndex",assetIndex);
-        minecraftArgs.put("--uuid","81b9a0c8996742278bbfb7ac8871323f");
-        minecraftArgs.put("--accessToken","eyJhbGciOiJIUzI1NiJ9.eyJ4dWlkIjoiMjUzNTQyNTQ2NTgyMjgyMCIsImFnZyI6IkFkdWx0Iiwic3ViIjoiNzU1YTkyMzUtYjFhMS00ZTc2LTk3MGItMjU1Nzc4MWE0M2FkIiwibmJmIjoxNjU5NDk5NDI2LCJhdXRoIjoiWEJPWCIsInJvbGVzIjpbXSwiaXNzIjoiYXV0aGVudGljYXRpb24iLCJleHAiOjE2NTk1ODU4MjYsImlhdCI6MTY1OTQ5OTQyNiwicGxhdGZvcm0iOiJVTktOT1dOIiwieXVpZCI6IjI1NTc0YWE4MTE0MDRkYThjNzIxZTVjMWFmMDNmNGM1In0.KdSERf_p37zzcLnUvsQ1K_WJs04woh-PWoocl3Mi14o");
+        minecraftArgs.put("--uuid", XMTL.getUuid());
+        minecraftArgs.put("--accessToken", XMTL.getAccessToken());
         minecraftArgs.put("--versionType",StringConstant.LAUNCH_VERSION);
         minecraftArgs.put("--width",StringConstant.WIDTH.toString());
         minecraftArgs.put("--height",StringConstant.HEIGHT.toString());
@@ -286,5 +290,9 @@ public class LaunchMinecraft {
             throw new RuntimeException(e);
         }
         return javaPath;
+    }
+    private XMTL updatePlayerInfo(){
+        new MicrosoftLogin().accountRefresh();
+        return JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTL.class);
     }
 }

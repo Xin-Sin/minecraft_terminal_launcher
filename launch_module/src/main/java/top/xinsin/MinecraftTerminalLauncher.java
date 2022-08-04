@@ -2,8 +2,6 @@ package top.xinsin;
 
 import top.xinsin.thread.UserInputScanner;
 
-import java.util.Scanner;
-
 /**
  * Created On 8/3/22 11:20 AM
  *

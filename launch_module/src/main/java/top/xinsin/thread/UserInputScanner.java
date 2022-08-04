@@ -19,7 +19,12 @@ public class UserInputScanner implements Runnable {
     public void run() {
         Thread.currentThread().setName("UserInputScanner");
         while (true) {
-            InputUtil.userInputHandler(scanner.nextLine());
+            String s = scanner.nextLine();
+            if (s == null || s.isEmpty()) {
+                continue;
+            }else {
+                InputUtil.userInputHandler(s);
+            }
         }
     }
 }

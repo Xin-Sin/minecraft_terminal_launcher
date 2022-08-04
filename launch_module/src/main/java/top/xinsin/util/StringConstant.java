@@ -15,4 +15,5 @@ public class StringConstant {
     public static final String VERSION = LAUNCH_VERSION.split(" ")[1];
     public static final Integer HEIGHT = 480;
     public static final Integer WIDTH = 840;
+    public static final String XMTL_INFO_PATH = "xmtl.json";
 }
