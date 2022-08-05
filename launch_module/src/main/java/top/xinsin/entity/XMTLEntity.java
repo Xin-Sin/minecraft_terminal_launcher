@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class XMTL {
+public class XMTLEntity {
     private String accessToken;
     private String uuid;
     private String name;

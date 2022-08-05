@@ -1,5 +1,6 @@
 package top.xinsin;
 
+import lombok.extern.slf4j.Slf4j;
 import top.xinsin.thread.UserInputScanner;
 
 /**
@@ -8,11 +9,12 @@ import top.xinsin.thread.UserInputScanner;
  * @author xinsin
  * @version 1.0.0
  */
+@Slf4j
 public class MinecraftTerminalLauncher {
     public static void main(String[] args) {
-        System.out.println("welcome to MinecraftTerminalLauncher");
-        System.out.println("type ~help to get help");
-        System.out.println("this program is written By xinxin");
+        log.info("welcome to MinecraftTerminalLauncher");
+        log.info("type ~help to get help");
+        log.info("this program is written By xinxin");
         new Thread(new UserInputScanner()).start();
     }
 }

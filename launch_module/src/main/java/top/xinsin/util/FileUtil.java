@@ -3,10 +3,9 @@ package top.xinsin.util;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import top.xinsin.entity.XMTL;
+import top.xinsin.entity.XMTLEntity;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Created On 8/4/22 9:05 AM
@@ -20,11 +19,11 @@ public class FileUtil {
     public static void writeFile(String path, String content) {
         FileUtils.writeStringToFile(new File(path), content, "UTF-8");
     }
-    public static XMTL readConfigureFile(){
-        return JSONObject.parseObject(readFile(StringConstant.XMTL_INFO_PATH), XMTL.class);
+    public static XMTLEntity readConfigureFile(){
+        return JSONObject.parseObject(readFile(StringConstant.XMTL_INFO_PATH), XMTLEntity.class);
     }
-    public static void writeConfigureFile(XMTL xmtl){
-        writeFile(StringConstant.XMTL_INFO_PATH, JSONObject.toJSONString(xmtl));
+    public static void writeConfigureFile(XMTLEntity xmtlEntity){
+        writeFile(StringConstant.XMTL_INFO_PATH, JSONObject.toJSONString(xmtlEntity));
     }
     @SneakyThrows
     public static String readFile(String path) {

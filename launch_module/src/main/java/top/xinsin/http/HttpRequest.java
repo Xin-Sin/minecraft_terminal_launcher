@@ -1,6 +1,5 @@
 package top.xinsin.http;
 
-import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 
@@ -101,5 +100,4 @@ public class HttpRequest {
                 .body();
         return JSONObject.parseObject(body);
     }
-
 }

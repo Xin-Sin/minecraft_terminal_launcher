@@ -1,7 +1,9 @@
 package top.xinsin.util;
 
 import lombok.extern.slf4j.Slf4j;
-import top.xinsin.entity.XMTL;
+import top.xinsin.download.VillagerDownload;
+import top.xinsin.download.VillagerVersion;
+import top.xinsin.entity.XMTLEntity;
 import top.xinsin.minecraft.GetVersions;
 import top.xinsin.minecraft.LaunchMinecraft;
 import top.xinsin.minecraft.MicrosoftLogin;
@@ -63,6 +65,9 @@ public class InputUtil {
                     case "minecraft":
                         inputMinecraftPath(s);
                         break;
+                    case "game":
+                        inputGame(s);
+                        break;
                     default:
                         System.out.println("Unknown command");
                         break;
@@ -73,13 +78,70 @@ public class InputUtil {
         }
     }
 
+    private static void inputGame(String[] s) {
+        if(s.length == 1){
+            log.info("请输入~game <villager|fabric|forge|optifine> 来获取游戏版本");
+        }else if (s.length >= 2){
+            switch (s[1]){
+                case "villager":
+                    if (s.length >= 3) {
+                        String type = s[2];
+                        switch (type) {
+                            case "release":
+                                if (s.length == 4){
+                                    log.info(VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1).getUrl());
+                                    new VillagerDownload().villagerVersionJSONDownload(VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1).getUrl());
+                                }else{
+                                    System.out.println(VillagerVersion.getReleaseVersions());
+                                }
+                                break;
+                            case "snapshot":
+                                System.out.println(VillagerVersion.getSnapshotVersions());
+                                break;
+                            case "old_beta":
+                                System.out.println(VillagerVersion.getOldBetaVersions());
+                                break;
+                            default:
+                                System.out.println("Unknown type");
+                                break;
+                        }
+                    }else {
+                        log.info("请输入~game villager <release|snapshot|old_beta> 来获取游戏版本");
+                    }
+                case "fabric":
+                    inputFabric();
+                    break;
+                case "forge":
+                    inputForge();
+                    break;
+                case "optifine":
+                    inputOptifine();
+                    break;
+                default:
+                    System.out.println("Unknown command");
+                    break;
+            }
+        }
+    }
+
+    private static void inputOptifine() {
+    }
+
+    private static void inputForge() {
+
+    }
+
+    private static void inputFabric() {
+
+    }
+
     private static void inputMinecraftPath(String[] s) {
         if (s.length == 1){
             log.info("请输入Minecraft目录,例:~minecraft </home/{user}/.minecraft/>");
         }else if (s.length == 2){
-            XMTL xmtl = FileUtil.readConfigureFile();
-            xmtl.setMinecraftPath(s[1]);
-            FileUtil.writeConfigureFile(xmtl);
+            XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+            xmtlEntity.setMinecraftPath(s[1]);
+            FileUtil.writeConfigureFile(xmtlEntity);
             minecraftPath = s[1];
             log.info("成功设置minecraft路径为:{}",s[1]);
         }else{
@@ -92,9 +154,9 @@ public class InputUtil {
             log.info("请使用~wrap <包装命令>");
         } else if (s.length == 2) {
             log.info("即将写入包装命令:{}",s[1]);
-            XMTL xmtl = FileUtil.readConfigureFile();
-            xmtl.setWrapCommand(s[1]);
-            FileUtil.writeConfigureFile(xmtl);
+            XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+            xmtlEntity.setWrapCommand(s[1]);
+            FileUtil.writeConfigureFile(xmtlEntity);
             log.info("写入成功");
         }
     }
@@ -110,28 +172,28 @@ public class InputUtil {
                 log.info("请使用~java <index|name>来选择您使用的java版本");
             }
         } else if (s.length == 2) {
-            XMTL xmtl = FileUtil.readConfigureFile();
+            XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
             String pattern = "^\\d+$";
             if (s[1].matches(pattern)) {
                 int index = Integer.parseInt(s[1]);
                 if (index > java.size()) {
                     log.warn("index out of range");
                 } else {
-                    xmtl.setSelectJavaVersion(java.get(index - 1));
-                    log.info("set java version:{}", xmtl.getSelectJavaVersion());
+                    xmtlEntity.setSelectJavaVersion(java.get(index - 1));
+                    log.info("set java version:{}", xmtlEntity.getSelectJavaVersion());
                 }
             } else {
                 String name = s[1];
                 for (String java1 : java) {
                     if (java1.equals(name)) {
-                        xmtl.setSelectJavaVersion(java1);
-                        log.info("set java version:{}", xmtl.getSelectJavaVersion());
+                        xmtlEntity.setSelectJavaVersion(java1);
+                        log.info("set java version:{}", xmtlEntity.getSelectJavaVersion());
                         return;
                     }
                 }
                 log.warn("No java found");
             }
-            FileUtil.writeConfigureFile(xmtl);
+            FileUtil.writeConfigureFile(xmtlEntity);
         }else {
             log.warn("Unknown command");
         }
@@ -171,8 +233,8 @@ public class InputUtil {
         if (args.length == 1){
             System.out.println("请使用~launch <version>进行启动");
         }else if (args.length == 2) {
-            XMTL xmtl = FileUtil.readConfigureFile();
-            if (xmtl.getMinecraftPath() == null) {
+            XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+            if (xmtlEntity.getMinecraftPath() == null) {
                 log.warn("请输入Minecraft目录,例:~minecraft </home/{user}/.minecraft/>");
             }else {
                 Map<String, String> minecraftVersions = versions.getMinecraftVersions(minecraftPath);
@@ -191,32 +253,43 @@ public class InputUtil {
                 }
             }
         }else {
-            log.warn("Unknown command");
+            log.warn("未知命令");
         }
     }
 
     private static void inputVersions() {
-        XMTL xmtl = FileUtil.readConfigureFile();
-        if (xmtl.getMinecraftPath() == null) {
+        XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+        if (xmtlEntity.getMinecraftPath() == null) {
             log.warn("请输入Minecraft目录,例:~minecraft </home/{user}/.minecraft/>");
         }else {
-            Map<String, String> minecraftVersions = versions.getMinecraftVersions(minecraftPath);
-            if (minecraftVersions.size() == 0) {
-                System.out.println("No versions found");
-            } else {
-                System.out.println("Found " + minecraftVersions.size() + " versions");
-                minecraftVersions.keySet().forEach(System.out::println);
+            try {
+                Map<String, String> minecraftVersions = versions.getMinecraftVersions(minecraftPath);
+                if (minecraftVersions.size() == 0) {
+                    log.info("没有找到java");
+                } else {
+                    log.info("找到 " + minecraftVersions.size() + " java");
+                    minecraftVersions.keySet().forEach(log::info);
+                }
+            }catch (Exception e){
+                log.warn("当前路径没有minecraft版本,请使用 ~game 来进行下载");
             }
         }
     }
 
     private static void inputHelp() {
-        System.out.println("~help: print this help");
-        System.out.println("~exit: exit this program");
+        log.info("~help: 获取帮助");
+        log.info("~exit: 退出程序");
+        log.info("~java: 设置java版本");
+        log.info("~minecraft: 设置minecraft路径");
+        log.info("~game: 下载minecraft");
+        log.info("~login: 正版登录");
+        log.info("~launch: 启动minecraft");
+        log.info("~refresh: 刷新玩家信息");
+        log.info("~versions: 查看所有minecraft版本");
     }
 
     private static void inputExit(){
-        System.out.println("Goodbye!");
+        log.info("再见!");
         System.exit(0);
     }
 

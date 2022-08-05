@@ -2,7 +2,7 @@ package top.xinsin.minecraft;
 
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import top.xinsin.entity.XMTL;
+import top.xinsin.entity.XMTLEntity;
 import top.xinsin.http.HttpRequest;
 import top.xinsin.util.FileUtil;
 import top.xinsin.util.StringConstant;
@@ -33,7 +33,7 @@ public class MicrosoftLogin {
         return xboxVerify(accessToken, refreshToken);
     }
     public void accountRefresh(){
-        String[] strings = httpRequest.microsoftRefresh("https://login.live.com/oauth20_token.srf", JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTL.class).getRefreshToken());
+        String[] strings = httpRequest.microsoftRefresh("https://login.live.com/oauth20_token.srf", JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTLEntity.class).getRefreshToken());
         xboxVerify(strings[0], strings[1]);
     }
 
@@ -57,18 +57,18 @@ public class MicrosoftLogin {
                 String username = minecraftInfo.getString("name");
                 log.info("minecraft验证成功");
                 log.info("正在进行玩家信息写入...");
-                XMTL XMTL = JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTL.class);
-                if (!XMTL.getUuid().equals(uuid)) {
+                XMTLEntity XMTLEntity = JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTLEntity.class);
+                if (!XMTLEntity.getUuid().equals(uuid)) {
                     log.info("检测到玩家uuid改变,您可能更换了帐号");
-                    XMTL.setUuid(uuid);
+                    XMTLEntity.setUuid(uuid);
                 }
-                if (!XMTL.getName().equals(username)) {
+                if (!XMTLEntity.getName().equals(username)) {
                     log.info("检测到玩家名改变,您可能更换了帐号");
-                    XMTL.setName(username);
+                    XMTLEntity.setName(username);
                 }
-                XMTL.setAccessToken(minecraftAccessToken);
-                XMTL.setRefreshToken(refreshToken);
-                FileUtil.writeFile(StringConstant.XMTL_INFO_PATH, JSONObject.toJSONString(XMTL));
+                XMTLEntity.setAccessToken(minecraftAccessToken);
+                XMTLEntity.setRefreshToken(refreshToken);
+                FileUtil.writeFile(StringConstant.XMTL_INFO_PATH, JSONObject.toJSONString(XMTLEntity));
                 log.info("玩家信息写入成功");
                 return true;
             }

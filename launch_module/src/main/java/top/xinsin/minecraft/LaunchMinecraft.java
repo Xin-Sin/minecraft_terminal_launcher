@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import top.xinsin.entity.XMTL;
+import top.xinsin.entity.XMTLEntity;
 import top.xinsin.util.FileUtil;
 import top.xinsin.util.InputUtil;
 import top.xinsin.util.StringConstant;
@@ -123,18 +123,18 @@ public class LaunchMinecraft {
     }
 
     private Map<String,String> getMinecraftArgs(JSONObject jsonObject){
-        XMTL XMTL = updatePlayerInfo();
+        XMTLEntity XMTLEntity = updatePlayerInfo();
         Map<String,String> minecraftArgs = new HashMap<>();
         String mainClass = jsonObject.getString("mainClass");
         String version = jsonObject.getString("id");
         String assetIndex = jsonObject.getJSONObject("assetIndex").getString("id");
         minecraftArgs.put("mainClass",mainClass);
-        minecraftArgs.put("--username", XMTL.getName());
+        minecraftArgs.put("--username", XMTLEntity.getName());
         minecraftArgs.put("--version",version);
         minecraftArgs.put("--assetIndex",assetIndex);
-        minecraftArgs.put("--uuid", XMTL.getUuid());
-        minecraftArgs.put("--accessToken", XMTL.getAccessToken());
-        minecraftArgs.put("--versionType",StringConstant.LAUNCH_VERSION);
+        minecraftArgs.put("--uuid", XMTLEntity.getUuid());
+        minecraftArgs.put("--accessToken", XMTLEntity.getAccessToken());
+        minecraftArgs.put("--versionType","\"" + StringConstant.LAUNCH_VERSION + "\"");
         minecraftArgs.put("--width",StringConstant.WIDTH.toString());
         minecraftArgs.put("--height",StringConstant.HEIGHT.toString());
         minecraftArgs.put("--gameDir",file.getPath().substring(0,file.getPath().lastIndexOf(File.separator)));
@@ -274,8 +274,8 @@ public class LaunchMinecraft {
         return name.split(":");
     }
 
-    private XMTL updatePlayerInfo(){
+    private XMTLEntity updatePlayerInfo(){
         new MicrosoftLogin().accountRefresh();
-        return JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTL.class);
+        return JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTLEntity.class);
     }
 }
