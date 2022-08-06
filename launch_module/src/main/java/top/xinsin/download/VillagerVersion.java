@@ -4,7 +4,6 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import top.xinsin.entity.VillagerVersionEntity;
 import top.xinsin.enums.VillagerVersionType;
-import top.xinsin.http.HttpRequest;
 import top.xinsin.http.HttpVillager;
 import top.xinsin.util.FormatUtil;
 import top.xinsin.util.StringConstant;

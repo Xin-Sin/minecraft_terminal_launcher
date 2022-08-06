@@ -265,9 +265,9 @@ public class InputUtil {
             try {
                 Map<String, String> minecraftVersions = versions.getMinecraftVersions(minecraftPath);
                 if (minecraftVersions.size() == 0) {
-                    log.info("没有找到java");
+                    log.info("没有找到minecraft版本");
                 } else {
-                    log.info("找到 " + minecraftVersions.size() + " java");
+                    log.info("找到 " + minecraftVersions.size() + "个minecraft版本");
                     minecraftVersions.keySet().forEach(log::info);
                 }
             }catch (Exception e){

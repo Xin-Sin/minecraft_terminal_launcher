@@ -12,13 +12,12 @@ import java.util.Arrays;
  * @version 1.0.0
  */
 public class FormatUtil {
+    public static String assetsPath(String hash){
+        return hash.substring(0,2) + "/" + hash;
+    }
     public static String librariesFileName(String path){
         return path.substring(path.lastIndexOf("/") + 1);
 
-    }
-    public static ArrayList<String> librariesPath(String path){
-        String[] split = path.split("/");
-        return new ArrayList<>(Arrays.asList(split).subList(0, split.length - 1));
     }
     public static String VillagerVersions(ArrayList<VillagerVersionEntity> villagerVersions,String type,String command) {
         StringBuilder sb = new StringBuilder();

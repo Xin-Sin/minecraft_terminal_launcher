@@ -5,6 +5,7 @@ import com.alibaba.fastjson2.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import top.xinsin.entity.XMTLEntity;
+import top.xinsin.enums.VersionType;
 import top.xinsin.util.FileUtil;
 import top.xinsin.util.InputUtil;
 import top.xinsin.util.StringConstant;
@@ -31,16 +32,26 @@ public class LaunchMinecraft {
         String content = null;
         content = FileUtil.readFile(path);
         JSONObject jsonObject = JSONObject.parseObject(content);
-        HashSet<String> libraries = getClassPath(jsonObject.getJSONArray("patches"));
+        HashSet<String> libraries = null;
+        if (jsonObject.getJSONArray("patches") == null){
+            libraries = getVillagerClassPath(jsonObject.getJSONArray("libraries"),VersionType.villager);
+        }else{
+            libraries = getVillagerClassPath(jsonObject.getJSONArray("patches"),VersionType.fabric);
+        }
+
         Map<String, String> jvmArgs = getJvmArgs(jsonObject.getJSONObject("arguments").getJSONArray("jvm"));
         Map<String, String> minecraftArgs = getMinecraftArgs(jsonObject);
         StringBuilder shellText = new StringBuilder();
+        XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
         shellText.append("#!/usr/bin/env bash")
                 .append("\n")
                 .append("cd ")
                 .append(file.getPath(), 0, file.getPath().lastIndexOf(File.separator))
                 .append("\n")
-                .append("prime-run /usr/local/java/jdk1.8.0_311/bin/java ");
+                .append(xmtlEntity.getWrapCommand())
+                .append(" ")
+                .append(xmtlEntity.getSelectJavaVersion())
+                .append(" ");
         for (Map.Entry<String,String> entry:jvmArgs.entrySet()) {
             if (entry.getValue().equals("@")) {
                 shellText.append(entry.getKey()).append(" ");
@@ -48,6 +59,11 @@ public class LaunchMinecraft {
                 if (entry.getKey().equals("-Djava.library.path")) {
                     String i = file.getPath();
                     String substring = i.substring(0, i.lastIndexOf("/"));
+                    /*File file1 = new File(substring + "/natives-linux-x86_64");
+                    System.out.println(file1.getPath());
+                    if (!file1.isDirectory()){
+                        file1.mkdir();
+                    }*/
                     for (String s : Objects.requireNonNull(new File(substring).list())) {
                         if (s.startsWith("natives-linux") || s.endsWith("natives")) {
                             shellText.append(entry.getKey()).append("=").append(substring).append(File.separator).append(s).append(" ");
@@ -81,9 +97,10 @@ public class LaunchMinecraft {
                         }
                     }
                     AtomicInteger num = new AtomicInteger();
+                    HashSet<String> finalLibraries = libraries;
                     libraries.forEach(e ->{
                         shellText.append(InputUtil.minecraft_libraries).append(e);
-                        if (num.get() != libraries.size() - 1) {
+                        if (num.get() != finalLibraries.size() - 1) {
                             shellText.append(File.pathSeparator);
                         }
                         num.getAndIncrement();
@@ -200,11 +217,68 @@ public class LaunchMinecraft {
      * @param jsonArray
      * @return
      */
-    private HashSet<String> getClassPath(JSONArray jsonArray){
-        JSONArray libraries = jsonArray.getJSONObject(0).getJSONArray("libraries");
+    private HashSet<String> getFabricClassPath(JSONArray jsonArray,HashSet<String > hashSet){
+        for (int i = 0; i < jsonArray.size(); i++) {
+            String[] names = getLibraries(jsonArray.getJSONObject(i).getString("name"));
+            String packages = names[0];
+            String name = names[1];
+            String version = names[2];
+            StringBuilder path = new StringBuilder();
+            String[] packages1 = packages.split("\\.");
+            for (String s : packages1) {
+                path.append(s);
+                path.append(File.separator);
+            }
+            path.append(name)
+                    .append(File.separator)
+                    .append(version)
+                    .append(File.separator)
+                    .append(name)
+                    .append("-")
+                    .append(version)
+                    .append(".jar");
+            hashSet.add(path.toString());
+        }
+        return hashSet;
+    }
+    private HashSet<String > villagerClassPath(JSONArray libraries){
         HashSet<String> classPath = new HashSet<>();
-//       拼接原版依赖库jar路径
         for (int i = 0; i < libraries.size(); i++) {
+            JSONObject downloads = libraries.getJSONObject(i).getJSONObject("downloads");
+            String artifact = downloads.getJSONObject("artifact").getString("path");
+            JSONArray rules = libraries.getJSONObject(i).getJSONArray("rules");
+            String action = null;
+            if (rules != null && rules.size() == 1){
+                action = rules.getJSONObject(0).getString("action");
+                JSONObject os = rules.getJSONObject(0).getJSONObject("os");
+                if (os != null){
+                    String os_name = os.getString("name");
+                    if (action.equals(StringConstant.ALLOW)){
+                        if (os_name.equals(StringConstant.OS_NAME)){
+                            classPath.add(artifact);
+                        }else {
+                            continue;
+                        }
+                    }
+                }
+            } else if (rules != null && rules.size() == 2) {
+                action = rules.getJSONObject(0).getString("action");
+                if (action.equals(StringConstant.ALLOW)){
+                    String disAllow = rules.getJSONObject(1).getString("action");
+                    JSONObject os = rules.getJSONObject(1).getJSONObject("os");
+                    String os_name = os.getString("name");
+                    if (disAllow.equals(StringConstant.DISALLOW)){
+                        if (!os_name.equals(StringConstant.OS_NAME)){
+                            classPath.add(artifact);
+                        }else{
+                            classPath.add(artifact);
+                        }
+                    }
+                }
+            }
+            classPath.add(artifact);
+        }
+        /*for (int i = 0; i < libraries.size(); i++) {
             JSONObject jsonObject = libraries.getJSONObject(i).getJSONObject("downloads");
             if (jsonObject != null){
                 String string = jsonObject.getJSONObject("artifact").getString("path");
@@ -237,29 +311,18 @@ public class LaunchMinecraft {
                 }
                 classPath.add(string);
             }
-        }
-//        拼接fabric依赖库jar路径
-        JSONArray jsonArray2 = jsonArray.getJSONObject(1).getJSONArray("libraries");
-        for (int i = 0; i < jsonArray2.size(); i++) {
-            String[] names = getLibraries(jsonArray2.getJSONObject(i).getString("name"));
-            String packages = names[0];
-            String name = names[1];
-            String version = names[2];
-            StringBuilder path = new StringBuilder();
-            String[] packages1 = packages.split("\\.");
-            for (String s : packages1) {
-                path.append(s);
-                path.append(File.separator);
-            }
-            path.append(name)
-                    .append(File.separator)
-                    .append(version)
-                    .append(File.separator)
-                    .append(name)
-                    .append("-")
-                    .append(version)
-                    .append(".jar");
-            classPath.add(path.toString());
+        }*/
+        return classPath;
+    }
+    private HashSet<String> getVillagerClassPath(JSONArray libraries, VersionType versionType){
+        HashSet<String> classPath = null;
+        //拼接原版依赖库jar路径
+        if (versionType == VersionType.villager) {
+            classPath = villagerClassPath(libraries);
+        }else if (versionType == VersionType.fabric){
+            classPath = villagerClassPath(libraries.getJSONObject(0).getJSONArray("libraries"));
+            //拼接fabric依赖库jar路径
+            getFabricClassPath(libraries.getJSONObject(1).getJSONArray("libraries"),classPath);
         }
         return classPath;
     }

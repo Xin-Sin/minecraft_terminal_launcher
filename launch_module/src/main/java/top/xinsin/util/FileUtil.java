@@ -29,4 +29,7 @@ public class FileUtil {
     public static String readFile(String path) {
         return FileUtils.readFileToString(new File(path), "UTF-8");
     }
+    public static void writeLauncherProfiles(String path){
+        writeFile(path,StringConstant.LAUNCHER_PROFILES);
+    }
 }
