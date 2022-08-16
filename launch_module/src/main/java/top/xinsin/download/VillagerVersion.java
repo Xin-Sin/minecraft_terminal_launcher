@@ -42,7 +42,7 @@ public class VillagerVersion {
         oldBetaVersions.clear();
 //        版本数组
         JSONArray versions = villagerVersion.getJSONArray("versions");
-        for (int i = versions.size() - 1; i > 0 ; i--) {
+        for (int i = versions.size() - 1; i >= 0 ; i--) {
             VillagerVersionEntity versionEntity = versions.getJSONObject(i).to(VillagerVersionEntity.class);
             if (versionEntity.getType().equals(VillagerVersionType.release.name())){
                 releaseVersions.add(versionEntity);

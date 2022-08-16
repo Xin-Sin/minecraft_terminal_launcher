@@ -3,6 +3,7 @@ package top.xinsin.util;
 import lombok.extern.slf4j.Slf4j;
 import top.xinsin.download.VillagerDownload;
 import top.xinsin.download.VillagerVersion;
+import top.xinsin.entity.VillagerVersionEntity;
 import top.xinsin.entity.XMTLEntity;
 import top.xinsin.minecraft.GetVersions;
 import top.xinsin.minecraft.LaunchMinecraft;
@@ -89,17 +90,27 @@ public class InputUtil {
                         switch (type) {
                             case "release":
                                 if (s.length == 4){
-                                    log.info(VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1).getUrl());
-                                    new VillagerDownload().villagerVersionJSONDownload(VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1).getUrl());
+                                    VillagerVersionEntity versionEntity = VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1);
+                                    new VillagerDownload().villagerVersionJSONDownload(versionEntity.getUrl(),versionEntity.getId());
                                 }else{
                                     System.out.println(VillagerVersion.getReleaseVersions());
                                 }
                                 break;
                             case "snapshot":
-                                System.out.println(VillagerVersion.getSnapshotVersions());
+                                if (s.length == 4){
+                                    VillagerVersionEntity versionEntity = VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1);
+                                    new VillagerDownload().villagerVersionJSONDownload(versionEntity.getUrl(),versionEntity.getId());
+                                }else {
+                                    System.out.println(VillagerVersion.getSnapshotVersions());
+                                }
                                 break;
                             case "old_beta":
-                                System.out.println(VillagerVersion.getOldBetaVersions());
+                                if (s.length == 4){
+                                    VillagerVersionEntity versionEntity = VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1);
+                                    new VillagerDownload().villagerVersionJSONDownload(versionEntity.getUrl(),versionEntity.getId());
+                                }else {
+                                    System.out.println(VillagerVersion.getOldBetaVersions());
+                                }
                                 break;
                             default:
                                 System.out.println("Unknown type");

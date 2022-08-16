@@ -24,4 +24,7 @@ public class StringConstant {
     public static final String LAUNCHER_PROFILES = "{\"selectedProfile\": \"(Default)\",\"profiles\": {\"(Default)\": {\"name\": \"(Default)\"}},\"clientToken\": \"88888888-8888-8888-8888-888888888888\"}";
     public static final String LAUNCHER_PROFILES_NAME = "launcher_profiles.json";
     public static final String VERSION_CLIENT_URL = "https://bmclapi2.bangbang93.com/version/";
+    public static final String BMCLAPI2_FABRIC_META =  "https://bmclapi2.bangbang93.com/fabric-meta";
+    public static final String FABRIC_VERSION_LOADER = "/v2/versions/loader/";
+    public static final String FABRIC_LOADER_JSON = "/v2/versions/loader/:game_version/:loader_version/profile/json";
 }

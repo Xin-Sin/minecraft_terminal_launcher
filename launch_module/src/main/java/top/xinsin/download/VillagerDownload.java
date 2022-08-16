@@ -27,10 +27,9 @@ public class VillagerDownload {
     private final HttpVillager httpVillager = new HttpVillager();
     private final DownloadAssetsMultipleThread instance = DownloadAssetsMultipleThread.getInstance();
     @SneakyThrows
-    public void villagerVersionJSONDownload(String url){
+    public void villagerVersionJSONDownload(String url,String name){
         XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
         JSONObject villagerVersion = httpVillager.getVillagerVersion(url);
-        String id = villagerVersion.getString("id");
         JSONArray libraries = villagerVersion.getJSONArray("libraries");
         String assetUrlJSon = villagerVersion.getJSONObject("assetIndex").getString("url");
         ArrayList<Artifact> artifacts = new ArrayList<>();
@@ -80,15 +79,15 @@ public class VillagerDownload {
                     JSONObject nativesArtifacts = classifiers.getJSONObject(nativeOs);
                     artifacts.add(nativesArtifacts.to(Artifact.class));
                     String nativesPath = nativesArtifacts.getString("path");
-                    String nativePath = xmtlEntity.getMinecraftPath() + "versions/" + id + "/" + nativeOs + "-" + id + "/";
+                    String nativePath = xmtlEntity.getMinecraftPath() + "versions/" + name + "/" + nativeOs + "-" + name + "/";
                     nativeFileEntities.add(new NativeFileEntity(nativesPath,nativePath));
                 }
             }
         }
-        log.info("准备开始下载 libraries 版本:{}",id);
+        log.info("准备开始下载 libraries 版本:{}",name);
         instance.downloadLibraries(artifacts);
         instance.countDownLatchLibraries.await();
-        log.info("{} libraries 已下载完成",id);
+        log.info("{} libraries 已下载完成",name);
         instance.executorServiceLibraries.shutdown();
         log.info("downloadLibrariesThread 下载线程已关闭");
         System.gc();
@@ -102,25 +101,25 @@ public class VillagerDownload {
             AssetEntity assetEntity = JSONObject.parseObject(to.get(entry).toString(), AssetEntity.class);
             assetEntities.add(assetEntity);
         }
-        log.info("准备开始下载 native 版本:{}",id);
+        log.info("准备开始下载 native 版本:{}",name);
 //        todo 这里下载native
         nativeFileEntities.forEach(e ->{
             httpVillager.nativesDownload(e.getNativesPath(),e.getNativePath());
         });
-        log.info("{} natives 已下载完成",id);
-        log.info("准备开始下载 asset 版本:{}",id);
+        log.info("{} natives 已下载完成",name);
+        log.info("准备开始下载 asset 版本:{}",name);
         instance.downloadAssets(assetEntities);
         instance.countDownLatchAssets.await();
-        log.info("{} assets 已下载完成",id);
+        log.info("{} assets 已下载完成",name);
         instance.executorServiceAssets.shutdown();
         log.info("downloadAssetsThread 下载线程已关闭");
         System.gc();
         log.info("开始写入:{}",StringConstant.LAUNCHER_PROFILES_NAME);
         FileUtil.writeLauncherProfiles(xmtlEntity.getMinecraftPath() + StringConstant.LAUNCHER_PROFILES_NAME);
         log.info("{} 写入完成",StringConstant.LAUNCHER_PROFILES_NAME);
-        String versionJson = id + ".json";
+        String versionJson = name + ".json";
         log.info("开始写入:{}",versionJson);
-        FileUtil.writeFile(xmtlEntity.getMinecraftPath() + "versions/" + id + "/" + versionJson,villagerVersion.toJSONString());
+        FileUtil.writeFile(xmtlEntity.getMinecraftPath() + "versions/" + name + "/" + versionJson,villagerVersion.toJSONString());
         log.info("{} 写入完成",versionJson);
         String assetJson = villagerVersion.getJSONObject("assetIndex").getString("id") + ".json";
         log.info("开始写入:{}",assetJson);
@@ -129,10 +128,10 @@ public class VillagerDownload {
         JSONObject clientJson = villagerVersion.getJSONObject("downloads").getJSONObject("client");
         Integer clientSize = clientJson.getInteger("size");
         String clientUrl = clientJson.getString("url");
-        String clientJar = id + ".jar";
+        String clientJar = name + ".jar";
         log.info("开始写入:{}",clientJar);
-        httpVillager.getVillagerClient(clientUrl,xmtlEntity.getMinecraftPath() + "versions/" + id + "/" + clientJar,clientSize);
+        httpVillager.getVillagerClient(clientUrl,xmtlEntity.getMinecraftPath() + "versions/" + name + "/" + clientJar,clientSize);
         log.info("{} 写入完成",clientJar);
-        log.info("{} 以安装成功",id);
+        log.info("原版 {} 以安装成功",name);
     }
 }
