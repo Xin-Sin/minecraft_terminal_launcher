@@ -1,8 +1,10 @@
 package top.xinsin.util;
 
 import lombok.extern.slf4j.Slf4j;
+import top.xinsin.download.FabricVersion;
 import top.xinsin.download.VillagerDownload;
 import top.xinsin.download.VillagerVersion;
+import top.xinsin.entity.FabricLoaderVersionEntity;
 import top.xinsin.entity.VillagerVersionEntity;
 import top.xinsin.entity.XMTLEntity;
 import top.xinsin.minecraft.GetVersions;
@@ -16,6 +18,7 @@ import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created On 8/3/22 11:41 AM
@@ -93,7 +96,7 @@ public class InputUtil {
                                     VillagerVersionEntity versionEntity = VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1);
                                     new VillagerDownload().villagerVersionJSONDownload(versionEntity.getUrl(),versionEntity.getId());
                                 }else{
-                                    System.out.println(VillagerVersion.getReleaseVersions());
+                                    log.info("\n" + VillagerVersion.getReleaseVersions());
                                 }
                                 break;
                             case "snapshot":
@@ -101,7 +104,7 @@ public class InputUtil {
                                     VillagerVersionEntity versionEntity = VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1);
                                     new VillagerDownload().villagerVersionJSONDownload(versionEntity.getUrl(),versionEntity.getId());
                                 }else {
-                                    System.out.println(VillagerVersion.getSnapshotVersions());
+                                    log.info("\n" + VillagerVersion.getSnapshotVersions());
                                 }
                                 break;
                             case "old_beta":
@@ -109,7 +112,7 @@ public class InputUtil {
                                     VillagerVersionEntity versionEntity = VillagerVersion.releaseVersions.get(Integer.parseInt(s[3]) - 1);
                                     new VillagerDownload().villagerVersionJSONDownload(versionEntity.getUrl(),versionEntity.getId());
                                 }else {
-                                    System.out.println(VillagerVersion.getOldBetaVersions());
+                                    log.info("\n" + VillagerVersion.getOldBetaVersions());
                                 }
                                 break;
                             default:
@@ -120,7 +123,7 @@ public class InputUtil {
                         log.info("请输入~game villager <release|snapshot|old_beta> 来获取游戏版本");
                     }
                 case "fabric":
-                    inputFabric();
+                    inputFabric(s);
                     break;
                 case "forge":
                     inputForge();
@@ -142,8 +145,29 @@ public class InputUtil {
 
     }
 
-    private static void inputFabric() {
-
+    private static void inputFabric(String[] s) {
+        if (s.length == 2) {
+//            这里屎山代码
+//            调用方法给arrayList赋值
+            VillagerVersion.getReleaseVersions();
+            ArrayList<VillagerVersionEntity> releaseVersions = VillagerVersion.releaseVersions;
+            for (int j = 0;j < releaseVersions.size();j++) {
+                log.info("{}.\t{}\t{}",j + 1,releaseVersions.get(j).getId(),releaseVersions.get(j).getTime());
+            }
+            log.info("fabric安装暂只支持正式版安装,请使用~game fabric <1,2,3,4,5...{}> 命令进行原版选择",VillagerVersion.releaseVersions.size());
+        } else if (s.length >= 3) {
+            if (s.length == 3){
+                ArrayList<FabricLoaderVersionEntity> fabricVersion = FabricVersion.getFabricVersion(VillagerVersion.releaseVersions.get(Integer.parseInt(s[2]) - 1).getId());
+                for (int j = fabricVersion.size() - 1; j >= 0 ; j--) {
+                    log.info("{}.\t{}\t{}",j + 1,fabricVersion.get(j).getVersion(),fabricVersion.get(j).getStable());
+                }
+                log.info("fabric安装暂只支持正式版安装,请使用~game fabric {原版序号} <1,2,3,4,5...{}> 命令进行下载安装",fabricVersion.size());
+            } else if (s.length == 4) {
+                FabricVersion.getFabricLoader(VillagerVersion.releaseVersions.get(Integer.parseInt(s[2]) - 1).getId(),FabricVersion.getFabricVersion(VillagerVersion.releaseVersions.get(Integer.parseInt(s[2]) - 1).getId()).get(Integer.parseInt(s[3]) - 1).getVersion());
+            }
+        }else {
+            log.info("请输入~game fabric 来获取游戏版本");
+        }
     }
 
     private static void inputMinecraftPath(String[] s) {
@@ -240,29 +264,40 @@ public class InputUtil {
         }
     }
 
-    private static void inputLaunch(String[] args) {
-        if (args.length == 1){
-            System.out.println("请使用~launch <version>进行启动");
-        }else if (args.length == 2) {
-            XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
-            if (xmtlEntity.getMinecraftPath() == null) {
-                log.warn("请输入Minecraft目录,例:~minecraft </home/{user}/.minecraft/>");
-            }else {
-                Map<String, String> minecraftVersions = versions.getMinecraftVersions(minecraftPath);
-                Set<String> keys = minecraftVersions.keySet();
-                int num = 0;
-                for (String key : keys) {
-                    if (args[1].equals(key)) {
-                        new LaunchMinecraft().readVersionJson(minecraftVersions.get(key));
-                    } else {
-                        num++;
-                        if (num == keys.size()) {
-                            System.out.println("unknown version");
-                            num = 0;
-                        }
+    private static void launchGame(String s){
+        XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+        if (xmtlEntity.getMinecraftPath() == null) {
+            log.warn("请输入Minecraft目录,例:~minecraft </home/{user}/.minecraft/>");
+        }else {
+            Map<String, String> minecraftVersions = versions.getMinecraftVersions(minecraftPath);
+            Set<String> keys = minecraftVersions.keySet();
+            int num = 0;
+            for (String key : keys) {
+                if (s.equals(key)) {
+                    new LaunchMinecraft().readVersionJson(minecraftVersions.get(key));
+                    xmtlEntity.setBeforeLaunch(s);
+                    FileUtil.writeConfigureFile(xmtlEntity);
+                } else {
+                    num++;
+                    if (num == keys.size()) {
+                        System.out.println("unknown version");
+                        num = 0;
                     }
                 }
             }
+        }
+    }
+    private static void inputLaunch(String[] args) {
+        if (args.length == 1){
+            XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+            if (xmtlEntity.getBeforeLaunch() != null){
+                launchGame(xmtlEntity.getBeforeLaunch());
+            }else {
+                log.info("请使用~launch <version>进行启动");
+                log.info("当你启动过游戏时,可以使用 ~launch 启动上一次游戏");
+            }
+        }else if (args.length == 2) {
+            launchGame(args[1]);
         }else {
             log.warn("未知命令");
         }

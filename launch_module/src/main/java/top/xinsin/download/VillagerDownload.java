@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import top.xinsin.entity.Artifact;
+import top.xinsin.entity.ArtifactEntity;
 import top.xinsin.entity.AssetEntity;
 import top.xinsin.entity.NativeFileEntity;
 import top.xinsin.entity.XMTLEntity;
@@ -13,6 +13,7 @@ import top.xinsin.thread.DownloadAssetsMultipleThread;
 import top.xinsin.util.FileUtil;
 import top.xinsin.util.StringConstant;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -32,10 +33,10 @@ public class VillagerDownload {
         JSONObject villagerVersion = httpVillager.getVillagerVersion(url);
         JSONArray libraries = villagerVersion.getJSONArray("libraries");
         String assetUrlJSon = villagerVersion.getJSONObject("assetIndex").getString("url");
-        ArrayList<Artifact> artifacts = new ArrayList<>();
+        ArrayList<ArtifactEntity> artifactEntities = new ArrayList<>();
         ArrayList<NativeFileEntity> nativeFileEntities = new ArrayList<>();
         for (int i = 0; i < libraries.size(); i++) {
-            Artifact downloads = libraries.getJSONObject(i).getJSONObject("downloads").getJSONObject("artifact").to(Artifact.class);
+            ArtifactEntity downloads = libraries.getJSONObject(i).getJSONObject("downloads").getJSONObject("artifact").to(ArtifactEntity.class);
             JSONArray rules = libraries.getJSONObject(i).getJSONArray("rules");
             if (rules != null && rules.size() != 0){
                 if (rules.size() == 1){
@@ -47,7 +48,7 @@ public class VillagerDownload {
                         if (action.equals(StringConstant.ALLOW)){
                             if (os_name.equals(StringConstant.OS_NAME.toLowerCase())){
                                 //todo 这里应该针对该系统进行下载
-                                artifacts.add(downloads);
+                                artifactEntities.add(downloads);
                             }
                         }
                     }
@@ -59,17 +60,17 @@ public class VillagerDownload {
                         if (action1.equals(StringConstant.DISALLOW)){
                             if (!os_name.equals(StringConstant.OS_NAME.toLowerCase())){
                                 //todo 这里应该针对不是该该系统进行下载
-                                artifacts.add(downloads);
+                                artifactEntities.add(downloads);
                             }else{
                                 //todo 这里应该针对该系统进行下载
-                                artifacts.add(downloads);
+                                artifactEntities.add(downloads);
                             }
                         }
                     }
                 }
             }else{
                 //todo 这里应该全部进行下载
-                artifacts.add(downloads);
+                artifactEntities.add(downloads);
             }
             JSONObject natives = libraries.getJSONObject(i).getJSONObject("natives");
             if (natives != null){
@@ -77,7 +78,7 @@ public class VillagerDownload {
                 JSONObject classifiers = libraries.getJSONObject(i).getJSONObject("downloads").getJSONObject("classifiers");
                 if (nativeOs != null) {
                     JSONObject nativesArtifacts = classifiers.getJSONObject(nativeOs);
-                    artifacts.add(nativesArtifacts.to(Artifact.class));
+                    artifactEntities.add(nativesArtifacts.to(ArtifactEntity.class));
                     String nativesPath = nativesArtifacts.getString("path");
                     String nativePath = xmtlEntity.getMinecraftPath() + "versions/" + name + "/" + nativeOs + "-" + name + "/";
                     nativeFileEntities.add(new NativeFileEntity(nativesPath,nativePath));
@@ -85,7 +86,7 @@ public class VillagerDownload {
             }
         }
         log.info("准备开始下载 libraries 版本:{}",name);
-        instance.downloadLibraries(artifacts);
+        instance.downloadLibraries(artifactEntities);
         instance.countDownLatchLibraries.await();
         log.info("{} libraries 已下载完成",name);
         instance.executorServiceLibraries.shutdown();
@@ -130,7 +131,13 @@ public class VillagerDownload {
         String clientUrl = clientJson.getString("url");
         String clientJar = name + ".jar";
         log.info("开始写入:{}",clientJar);
-        httpVillager.getVillagerClient(clientUrl,xmtlEntity.getMinecraftPath() + "versions/" + name + "/" + clientJar,clientSize);
+        String villagerClient = xmtlEntity.getMinecraftPath() + "versions/" + name + "/" + clientJar;
+        File file = new File(villagerClient);
+        if (!file.exists()) {
+            httpVillager.getVillagerClient(clientUrl,villagerClient,clientSize);
+        }else{
+            log.info("原版已安装");
+        }
         log.info("{} 写入完成",clientJar);
         log.info("原版 {} 以安装成功",name);
     }

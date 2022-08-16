@@ -1,8 +1,7 @@
 package top.xinsin.thread;
 
-import top.xinsin.entity.Artifact;
+import top.xinsin.entity.ArtifactEntity;
 import top.xinsin.entity.AssetEntity;
-import top.xinsin.entity.NativeFileEntity;
 import top.xinsin.http.HttpVillager;
 
 import java.util.ArrayList;
@@ -35,9 +34,9 @@ public class DownloadAssetsMultipleThread {
             });
         });
     }
-    public void downloadLibraries(ArrayList<Artifact> artifacts) {
-        countDownLatchLibraries = new CountDownLatch(artifacts.size());
-        artifacts.forEach(e -> {
+    public void downloadLibraries(ArrayList<ArtifactEntity> artifactEntities) {
+        countDownLatchLibraries = new CountDownLatch(artifactEntities.size());
+        artifactEntities.forEach(e -> {
             executorServiceLibraries.submit(()-> {
                 Thread.currentThread().setName("downloadLibrariesThread: " + Thread.currentThread().getId());
                 new HttpVillager().librariesDownload(e.getUrl(),e.getPath(),e.getSize());

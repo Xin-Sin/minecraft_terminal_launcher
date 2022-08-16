@@ -59,11 +59,6 @@ public class LaunchMinecraft {
                 if (entry.getKey().equals("-Djava.library.path")) {
                     String i = file.getPath();
                     String substring = i.substring(0, i.lastIndexOf("/"));
-                    /*File file1 = new File(substring + "/natives-linux-x86_64");
-                    System.out.println(file1.getPath());
-                    if (!file1.isDirectory()){
-                        file1.mkdir();
-                    }*/
                     for (String s : Objects.requireNonNull(new File(substring).list())) {
                         if (s.startsWith("natives-linux") || s.endsWith("natives")) {
                             shellText.append(entry.getKey()).append("=").append(substring).append(File.separator).append(s).append(" ");
@@ -217,27 +212,11 @@ public class LaunchMinecraft {
      * @param jsonArray
      * @return
      */
-    private HashSet<String> getFabricClassPath(JSONArray jsonArray,HashSet<String > hashSet){
+    private HashSet<String> getFabricClassPath(JSONArray jsonArray,HashSet<String> hashSet){
         for (int i = 0; i < jsonArray.size(); i++) {
             String[] names = getLibraries(jsonArray.getJSONObject(i).getString("name"));
-            String packages = names[0];
-            String name = names[1];
-            String version = names[2];
-            StringBuilder path = new StringBuilder();
-            String[] packages1 = packages.split("\\.");
-            for (String s : packages1) {
-                path.append(s);
-                path.append(File.separator);
-            }
-            path.append(name)
-                    .append(File.separator)
-                    .append(version)
-                    .append(File.separator)
-                    .append(name)
-                    .append("-")
-                    .append(version)
-                    .append(".jar");
-            hashSet.add(path.toString());
+            String fabricClasspath = getFabricClasspath(names);
+            hashSet.add(fabricClasspath);
         }
         return hashSet;
     }
@@ -245,74 +224,72 @@ public class LaunchMinecraft {
         HashSet<String> classPath = new HashSet<>();
         for (int i = 0; i < libraries.size(); i++) {
             JSONObject downloads = libraries.getJSONObject(i).getJSONObject("downloads");
-            String artifact = downloads.getJSONObject("artifact").getString("path");
-            JSONArray rules = libraries.getJSONObject(i).getJSONArray("rules");
-            String action = null;
-            if (rules != null && rules.size() == 1){
-                action = rules.getJSONObject(0).getString("action");
-                JSONObject os = rules.getJSONObject(0).getJSONObject("os");
-                if (os != null){
-                    String os_name = os.getString("name");
-                    if (action.equals(StringConstant.ALLOW)){
-                        if (os_name.equals(StringConstant.OS_NAME)){
-                            classPath.add(artifact);
-                        }else {
-                            continue;
-                        }
-                    }
-                }
-            } else if (rules != null && rules.size() == 2) {
-                action = rules.getJSONObject(0).getString("action");
-                if (action.equals(StringConstant.ALLOW)){
-                    String disAllow = rules.getJSONObject(1).getString("action");
-                    JSONObject os = rules.getJSONObject(1).getJSONObject("os");
-                    String os_name = os.getString("name");
-                    if (disAllow.equals(StringConstant.DISALLOW)){
-                        if (!os_name.equals(StringConstant.OS_NAME)){
-                            classPath.add(artifact);
-                        }else{
-                            classPath.add(artifact);
-                        }
-                    }
-                }
-            }
-            classPath.add(artifact);
-        }
-        /*for (int i = 0; i < libraries.size(); i++) {
-            JSONObject jsonObject = libraries.getJSONObject(i).getJSONObject("downloads");
-            if (jsonObject != null){
-                String string = jsonObject.getJSONObject("artifact").getString("path");
+            String artifact = null;
+            if (downloads != null) {
+                artifact = downloads.getJSONObject("artifact").getString("path");
                 JSONArray rules = libraries.getJSONObject(i).getJSONArray("rules");
-                if (rules!= null) {
-                    String action = rules.getJSONObject(0).getString("action");
-                    if (rules.size() == 2){
-                        JSONObject jsonObject1 = rules.getJSONObject(1);
-                        String disallowAction = jsonObject1.getString("action");
-                        String os_name = jsonObject1.getJSONObject("os").getString("name");
-                        if (action.equals("allow")){
-                            if(disallowAction.equals("disallow")) {
-                                if (!StringConstant.OS_NAME.equals(os_name)) {
-                                    classPath.add(string);
-                                }else {
-                                    continue;
-                                }
-                            }
-                        }
-                    }else{
-                        String os_name = rules.getJSONObject(0).getJSONObject("os").getString("name");
-                        if (action.equals("allow")){
-                            if (StringConstant.OS_NAME.equals(os_name)) {
-                                classPath.add(string);
-                            }else {
+                String action = null;
+                if (rules != null && rules.size() == 1) {
+                    action = rules.getJSONObject(0).getString("action");
+                    JSONObject os = rules.getJSONObject(0).getJSONObject("os");
+                    if (os != null) {
+                        String os_name = os.getString("name");
+                        if (action.equals(StringConstant.ALLOW)) {
+                            if (os_name.equals(StringConstant.OS_NAME)) {
+                                classPath.add(artifact);
+                            } else {
                                 continue;
                             }
                         }
                     }
+                } else if (rules != null && rules.size() == 2) {
+                    action = rules.getJSONObject(0).getString("action");
+                    if (action.equals(StringConstant.ALLOW)) {
+                        String disAllow = rules.getJSONObject(1).getString("action");
+                        JSONObject os = rules.getJSONObject(1).getJSONObject("os");
+                        String os_name = os.getString("name");
+                        if (disAllow.equals(StringConstant.DISALLOW)) {
+                            if (!os_name.equals(StringConstant.OS_NAME)) {
+                                classPath.add(artifact);
+                            } else {
+                                classPath.add(artifact);
+                            }
+                        }
+                    }
                 }
-                classPath.add(string);
+            }else {
+                if (libraries.getJSONObject(i).getJSONObject("downloads") == null) {
+                    String name1 = libraries.getJSONObject(i).getString("name");
+                    String[] names = getLibraries(name1);
+                    String fabricClasspath = getFabricClasspath(names);
+                    classPath.add(fabricClasspath);
+                }
             }
-        }*/
+            if (artifact != null) {
+                classPath.add(artifact);
+            }
+        }
         return classPath;
+    }
+    private String getFabricClasspath(String[] names){
+        String packages = names[0];
+        String name = names[1];
+        String version = names[2];
+        StringBuilder path = new StringBuilder();
+        String[] packages1 = packages.split("\\.");
+        for (String s : packages1) {
+            path.append(s);
+            path.append(File.separator);
+        }
+        path.append(name)
+                .append(File.separator)
+                .append(version)
+                .append(File.separator)
+                .append(name)
+                .append("-")
+                .append(version)
+                .append(".jar");
+        return path.toString();
     }
     private HashSet<String> getVillagerClassPath(JSONArray libraries, VersionType versionType){
         HashSet<String> classPath = null;

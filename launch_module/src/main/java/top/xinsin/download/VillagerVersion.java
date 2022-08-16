@@ -35,7 +35,7 @@ public class VillagerVersion {
     }
     private static void getVersions(){
 //        JSONObject villagerVersion = httpVillager.getVillagerVersion("https://bmclapi2.bangbang93.com/mc/game/version_manifest.json");
-        JSONObject villagerVersion = httpVillager.getVillagerVersion(StringConstant.VERSION_MANIFEST);
+        JSONObject villagerVersion = httpVillager.getVillagerVersion(StringConstant.VERSION_MANIFEST_V2);
 //        清空集合,防止重复添加
         releaseVersions.clear();
         snapshotVersions.clear();

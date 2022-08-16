@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FabricLoaderVersion {
+public class FabricLoaderVersionEntity {
     private String version;
     private String stable;
 }

@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Created On 8/5/22 7:27 PM
+ * Created On 8/16/22 2:07 PM
  *
  * @author xinsin
  * @version 1.0.0
@@ -13,9 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Artifact {
-    private String path;
-    private String sha1;
-    private int size;
+public class FabricLibrariesEntity {
+    private String name;
     private String url;
 }

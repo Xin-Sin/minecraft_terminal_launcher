@@ -21,4 +21,5 @@ public class XMTLEntity {
     private String selectJavaVersion;
     private String wrapCommand;
     private String minecraftPath;
+    private String beforeLaunch;
 }
