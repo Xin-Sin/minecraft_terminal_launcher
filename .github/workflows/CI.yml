@@ -41,3 +41,4 @@ jobs:
         asset_path: ./target/XMTL-1.0-RELEASE-jar-with-dependencies.jar
         asset_name: XMTL-1.${{github.run_number}}.jar
         asset_content_type: application/jar
+
