@@ -1,5 +1,6 @@
 package top.xinsin.util;
 
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import top.xinsin.download.FabricVersion;
 import top.xinsin.download.VillagerDownload;
@@ -15,6 +16,8 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.io.FileNotFoundException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +35,12 @@ public class InputUtil {
     public static String minecraftPath = null;
     public static String minecraft_libraries = null;
     static {
-        minecraftPath = FileUtil.readConfigureFile().getMinecraftPath();
+        XMTLEntity xmtlEntity = FileUtil.readConfigureFile();
+        if (xmtlEntity == null){
+            FileUtil.writeLauncherProfiles(StringConstant.XMTL_INFO_PATH);
+            xmtlEntity = FileUtil.readConfigureFile();
+        }
+        minecraftPath = xmtlEntity.getMinecraftPath();
         minecraft_libraries = minecraftPath + "libraries/";
     }
     public static void userInputHandler(String input){
@@ -122,6 +130,7 @@ public class InputUtil {
                     }else {
                         log.info("请输入~game villager <release|snapshot|old_beta> 来获取游戏版本");
                     }
+                    break;
                 case "fabric":
                     inputFabric(s);
                     break;
@@ -242,6 +251,7 @@ public class InputUtil {
         log.info("保存玩家信息成功,请使用~launch <version> 登陆");
     }
 
+    @SneakyThrows
     private static void inputLogin(String[] args) {
         if (args.length == 1){
             String url = "https://login.live.com/oauth20_authorize.srf?client_id=00000000402b5328&response_type=code&scope=service%3A%3Auser.auth.xboxlive.com%3A%3AMBI_SSL&redirect_uri=https%3A%2F%2Flogin.live.com%2Foauth20_desktop.srf";
@@ -250,6 +260,11 @@ public class InputUtil {
             Clipboard systemClipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             Transferable trans = new StringSelection(url);
             systemClipboard.setContents(trans,null);
+            Desktop desktop = Desktop.getDesktop();
+            if (Desktop.isDesktopSupported() && desktop.isSupported(Desktop.Action.BROWSE)) {
+                URI uri = new URI(url);
+                desktop.browse(uri);
+            }
             System.out.println("已将网址复制到剪贴板,请直接把网址复制到浏览器的地址栏中!");
             System.out.println("请在登陆之后并把地址栏中的网址复制到这里");
             System.out.println("请使用~login <code>进行登陆");

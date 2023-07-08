@@ -58,11 +58,11 @@ public class MicrosoftLogin {
                 log.info("minecraft验证成功");
                 log.info("正在进行玩家信息写入...");
                 XMTLEntity XMTLEntity = JSONObject.parseObject(FileUtil.readFile(StringConstant.XMTL_INFO_PATH), XMTLEntity.class);
-                if (!XMTLEntity.getUuid().equals(uuid)) {
+                if (!uuid.equals(XMTLEntity.getUuid())) {
                     log.info("检测到玩家uuid改变,您可能更换了帐号");
                     XMTLEntity.setUuid(uuid);
                 }
-                if (!XMTLEntity.getName().equals(username)) {
+                if (!username.equals(XMTLEntity.getName())) {
                     log.info("检测到玩家名改变,您可能更换了帐号");
                     XMTLEntity.setName(username);
                 }

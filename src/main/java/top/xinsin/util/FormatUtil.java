@@ -34,7 +34,7 @@ public class FormatUtil {
                     .append("\n");
             num++;
         }
-        sb.append(type).append("版本").append("请使用~game villager").append(command).append(" <1,2,3,4,5...> 命令进行下载");
+        sb.append(type).append("版本").append("请使用~game villager ").append(command).append(" <1,2,3,4,5...> 命令进行下载");
         return sb.toString();
     }
     public static String formatTime(String time){
